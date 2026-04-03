@@ -6,7 +6,7 @@ This repository serves as a working example to demonstrate a new feature which w
 Then, during parsing, any words containing only known kanji readings (i.e. the word doesn't contain unknown kanji or known kanji with unknown readings) are marked with a special CSS class `readable`.  
 
 ## Example
-The known kanji readings setting was set with the data found in the `sampleReadingMap.json` file, which was generated from the first 30 levels of WaniKani.  Then, a random page (found here)[https://ncode.syosetu.com/n4419ly/] was parsed, and three screenshots were taken, for varying CSS stylings.  
+The known kanji readings setting was set with the data found in the `sampleReadingMap.json` file, which was generated from the first 30 levels of WaniKani.  Then, a random page [found here](https://ncode.syosetu.com/n4419ly/) was parsed, and three screenshots were taken, for varying CSS stylings.  
 
 ### Default
 ![Default](img_standard.png)
