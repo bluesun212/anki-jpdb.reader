@@ -135,4 +135,8 @@ export type ConfigurationSchema = {
 
   skipReleaseNotes: boolean;
   enableDebugMode: boolean;
+
+  //#region Kanji readings
+  knownReadings: string;
+  //#endregion
 };

@@ -152,6 +152,10 @@ export const DEFAULT_CONFIGURATION = Object.freeze<ConfigurationSchema>({
 
   //#endregion
 
+  //#region Kanji readings
+  knownReadings: "",
+  //#endregion
+
   skipReleaseNotes: false,
   enableDebugMode: false,
 });
