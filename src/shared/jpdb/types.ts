@@ -85,6 +85,7 @@ export type JPDBToken = {
   rubies: JPDBRuby[];
   pitchClass: string;
   sentence?: string;
+  readable: boolean;
 };
 
 export type LabeledCardState = {

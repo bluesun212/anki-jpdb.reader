@@ -639,6 +639,11 @@ export class TextHighlighter extends BaseTextHighlighter {
       element.querySelectorAll('rt').forEach((rt) => rt.classList.add('jpdb-furi'));
     }
 
+    // Mark words with known readings
+    if (token?.readable) {
+      element.classList.add("readable");
+    }
+
     if (card) {
       Registry.addCard(card);
 
