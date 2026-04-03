@@ -2,16 +2,23 @@ import { parse } from '@shared/jpdb/parse';
 import { JPDBCard, JPDBRawToken, JPDBRawVocabulary, JPDBToken } from '@shared/jpdb/types';
 import { Batch } from './parser.types';
 import { getPitchClass } from './pitch-accent-utils';
+import { getConfiguration } from '@shared/configuration/get-configuration';
 
 export class Parser {
   constructor(private batch: Batch) {}
 
   public async parse(): Promise<void> {
+    // Load known readings
+    let readingMap: Record<string, string[]> = {};
+    try {
+      readingMap = JSON.parse(await getConfiguration("knownReadings"));
+    } catch {}
+
     const paragraphs = this.batch.strings;
     const { tokens, vocabulary } = await parse(paragraphs);
 
     const cards = this.vocabToCard(vocabulary);
-    const parsedTokens = this.parseTokens(tokens, cards);
+    const parsedTokens = this.parseTokens(tokens, cards, readingMap);
 
     this.addSentenceInfo(paragraphs, parsedTokens);
 
@@ -55,7 +62,8 @@ export class Parser {
     });
   }
 
-  private parseTokens(tokens: JPDBRawToken[][], cards: JPDBCard[]): JPDBToken[][] {
+  private parseTokens(tokens: JPDBRawToken[][], cards: JPDBCard[], 
+      readingMap: Record<string, string[]>): JPDBToken[][] {
     return tokens.map((innerTokens) => {
       let lastPitchClass = '';
 
@@ -88,6 +96,17 @@ export class Parser {
 
         lastPitchClass = pitchClass || lastPitchClass;
 
+        // Determine readability by checking membership of kanji in reading map
+        let readable = true;
+        for (let i = 0; i < rubies.length; i++) {
+          let pos = rubies[i].start - position;
+          let kanji = card.spelling.slice(pos, pos + rubies[i].length);
+          if (!(kanji in readingMap) || !readingMap[kanji].includes(rubies[i].text)) {
+            readable = false;
+            break;
+          }
+        }
+
         const result: JPDBToken = {
           card,
           start: position,
@@ -95,6 +114,7 @@ export class Parser {
           length: length,
           rubies,
           pitchClass: lastPitchClass,
+          readable,
         };
 
         this.assignWordWithReading(result);
