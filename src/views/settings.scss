@@ -4,6 +4,8 @@
 @use '@styles/theme/_common';
 @use '@styles/theme/_forms';
 @use '@styles/theme/_outline';
+@use '@styles/theme/_overlay';
+@use './elements/html-color-input';
 
 h6 {
   font-size: 135%;
@@ -105,6 +107,10 @@ select {
   margin-top: 0.5em;
 }
 
+[space-after] {
+  margin-bottom: 0.5em;
+}
+
 keybind-input {
   display: flex;
   flex-direction: row;
@@ -124,56 +130,41 @@ keybind-input {
 
   border: 1px solid #666;
   border-radius: 8px;
+  overflow: hidden;
 
-  padding: 1em 0;
   margin: 0.5em 0 1.1em;
 
   .row {
     display: flex;
     flex-direction: row;
     align-items: center;
-    padding: 0.5em 2em;
+    padding: 0.75em 2em;
     flex-wrap: wrap;
+    border-top: 1px solid #444;
 
-    &:not(:last-of-type) {
-      border-bottom: 1px solid #444;
-    }
-
-    .col:last-of-type {
+    .col:last-of-type,
+    .col.flex-col {
       flex: 1;
+    }
+  }
+
+  &.dense {
+    padding: 0 0;
+
+    .row {
+      padding: 0.5em 1em;
     }
   }
 }
 
-.backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.8);
-  z-index: 1000;
-}
-
-.overlay {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1001;
-
-  width: 80%;
-  max-width: 800px;
-  padding: 2em;
-
-  background-color: #181818;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-
-  display: flex;
-  flex-direction: column;
-}
-
 .fa-code:not(:hover) {
   opacity: 0.8;
+}
+
+.version {
+  margin: 1em 0 2em;
+
+  opacity: 0.6;
+  font-size: 0.8em;
+  text-align: center;
 }

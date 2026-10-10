@@ -1,15 +1,18 @@
 import { getConfiguration } from '@shared/configuration/get-configuration';
+import { migrateConfiguration } from '@shared/configuration/migrate-configuration';
+import { CURRENT_SCHEMA_VERSION } from '@shared/configuration/schema-version';
+import { setConfiguration } from '@shared/configuration/set-configuration';
 import { addContextMenu } from '@shared/extension/add-context-menu';
 import { addInstallListener, OnInstalledReason } from '@shared/extension/add-install-listener';
 import { openOptionsPage } from '@shared/extension/open-options-page';
 import { openView } from '@shared/extension/open-view';
 import { ParsePageCommand } from '@shared/messages/foreground/parse-page.command';
 import { ParseSelectionCommand } from '@shared/messages/foreground/parse-selection.command';
-import { DeckManager } from './jpdb/deck-manager';
-import { FetchDecksCommandHandler } from './jpdb/fetch-decks-command.handler';
 import { GradeCardCommandHandler } from './jpdb-card-actions/grade-card-command.handler';
 import { RunDeckActionCommandHandler } from './jpdb-card-actions/run-deck-action-command.handler';
 import { UpdateCardStateCommandHandler } from './jpdb-card-actions/update-card-state-command.handler';
+import { DeckManager } from './jpdb/deck-manager';
+import { FetchDecksCommandHandler } from './jpdb/fetch-decks-command.handler';
 import { BackgroundCommandHandlerCollection } from './lib/background-command-handler-collection';
 import { LookupController } from './lookup/lookup-controller';
 import { LookupTextCommandHandler } from './lookup/lookup-text-command.handler';
@@ -59,11 +62,12 @@ handlerCollection.listen();
 
 addInstallListener(async ({ reason }) => {
   if (reason === OnInstalledReason.INSTALL) {
+    await setConfiguration('schemaVersion', CURRENT_SCHEMA_VERSION);
     await openOptionsPage();
   }
 
   if (reason === OnInstalledReason.UPDATE) {
-    // NOTE: OnUpdate In the future we may use this for schema updates
+    await migrateConfiguration();
 
     const skipReleaseNotes = await getConfiguration('skipReleaseNotes');
 

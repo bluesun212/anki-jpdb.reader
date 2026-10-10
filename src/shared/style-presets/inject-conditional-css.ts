@@ -1,0 +1,64 @@
+import { ConfigurationSchema } from '@shared/configuration/types';
+import { basePreset } from './presets/base.preset';
+import { categoryPreset } from './presets/category.preset';
+import { furiganaPreset } from './presets/furigana.preset';
+import { jpdbPreset } from './presets/jpdb.preset';
+import { misparsedPreset } from './presets/misparsed.preset';
+import { pitchAccentPreset } from './presets/pitch-accent.preset';
+
+export type InjectConditionalCssConfig = Pick<
+  ConfigurationSchema,
+  | 'enableStylePresets'
+  | 'stylePresets'
+  | 'stateCategories'
+  | 'baseStylingMode'
+  | 'baseColor'
+  | 'jpdbColorLocked'
+  | 'jpdbColorSuspended'
+  | 'jpdbColorBlacklisted'
+  | 'jpdbColorNeverForget'
+  | 'jpdbColorNotInDeck'
+  | 'jpdbColorNew'
+  | 'jpdbColorLearning'
+  | 'jpdbColorKnown'
+  | 'jpdbColorDue'
+  | 'jpdbColorFailed'
+  | 'categoryColorUnmined'
+  | 'categoryColorNew'
+  | 'categoryColorLearning'
+  | 'categoryColorKnown'
+  | 'highlightMisparsed'
+  | 'misparsedColor'
+  | 'generatePitch'
+  | 'highlightPitchAccent'
+  | 'pitchColorHeiban'
+  | 'pitchColorAtamadaka'
+  | 'pitchColorNakadaka'
+  | 'pitchColorOdaka'
+  | 'pitchColorKifuku'
+  | 'furiganaUnminedWords'
+  | 'furiganaNewWords'
+  | 'furiganaLearningWords'
+  | 'furiganaKnownWords'
+  | 'furiganaUnrelatedWords'
+  | 'skipFurigana'
+>;
+
+const CONDITIONAL_PRESETS: ((config: InjectConditionalCssConfig) => string)[] = [
+  basePreset,
+  jpdbPreset,
+  categoryPreset,
+  misparsedPreset,
+  pitchAccentPreset,
+  furiganaPreset,
+];
+
+export const injectConditionalCss = (config: InjectConditionalCssConfig): string => {
+  if (!config.enableStylePresets) {
+    return '';
+  }
+
+  return CONDITIONAL_PRESETS.map((preset) => preset(config))
+    .filter(Boolean)
+    .join('\n');
+};

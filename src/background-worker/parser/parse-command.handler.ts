@@ -5,6 +5,7 @@ import { openOptionsPage } from '@shared/extension/open-options-page';
 import { MessageSender } from '@shared/extension/types';
 import { ParseCommand } from '@shared/messages/background/parse.command';
 import { ToastCommand } from '@shared/messages/foreground/toast.command';
+import { computeWordCss } from '@shared/style-presets/compute-word-css';
 import { BackgroundCommandHandler } from '../lib/background-command-handler';
 import { ParseController } from './parse.controller';
 
@@ -33,9 +34,52 @@ export class ParseCommandHandler extends BackgroundCommandHandler<ParseCommand> 
       return;
     }
 
-    ConfigurationMonitor.watch(['customWordCSS'], async ({ customWordCSS }) => {
-      await injectStyle(sender.tab!.id!, 'word', customWordCSS ?? '');
-    });
+    ConfigurationMonitor.watch(
+      [
+        'topXMark',
+        'frequentColor',
+        'iPlus1Mark',
+        'iPlusOneColor',
+        'customWordCSS',
+        'enableStylePresets',
+        'stylePresets',
+        'stateCategories',
+        'baseStylingMode',
+        'baseColor',
+        'jpdbColorLocked',
+        'jpdbColorSuspended',
+        'jpdbColorBlacklisted',
+        'jpdbColorNeverForget',
+        'jpdbColorNotInDeck',
+        'jpdbColorNew',
+        'jpdbColorLearning',
+        'jpdbColorKnown',
+        'jpdbColorDue',
+        'jpdbColorFailed',
+        'categoryColorUnmined',
+        'categoryColorNew',
+        'categoryColorLearning',
+        'categoryColorKnown',
+        'highlightMisparsed',
+        'misparsedColor',
+        'generatePitch',
+        'highlightPitchAccent',
+        'pitchColorHeiban',
+        'pitchColorAtamadaka',
+        'pitchColorNakadaka',
+        'pitchColorOdaka',
+        'pitchColorKifuku',
+        'furiganaUnminedWords',
+        'furiganaNewWords',
+        'furiganaLearningWords',
+        'furiganaKnownWords',
+        'furiganaUnrelatedWords',
+        'skipFurigana',
+      ],
+      async (config) => {
+        await injectStyle(sender.tab!.id!, 'word', computeWordCss(config));
+      },
+    );
 
     this._parseController.parseSequences(sender, data);
   }

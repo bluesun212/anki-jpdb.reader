@@ -1,8 +1,24 @@
 import { DeckConfiguration, DiscoverWordConfiguration } from '../anki/types';
-import { JPDBCardState } from '../jpdb/types';
+import { StateCategories } from '../jpdb/types';
 
 export type Keybind = { key: string; code: string; modifiers: string[] };
 export type Keybinds = Keybind | [Keybind?, Keybind?];
+
+export type PresetColor = { r?: number; g?: number; b?: number; a?: number; style?: string };
+
+export enum BaseStylingMode {
+  JPDB = 'jpdb',
+  CATEGORY = 'category',
+  NONE = 'none',
+}
+
+export enum FuriganaVisibility {
+  UNSET = 'unset',
+  ALWAYS = 'always',
+  HOVER = 'hover',
+  NEVER = 'never',
+}
+
 export type ConfigurationSchema = {
   schemaVersion: number;
 
@@ -47,16 +63,58 @@ export type ConfigurationSchema = {
   //#endregion
   //#region Texthighlighting
 
-  newStates: JPDBCardState[];
+  stateCategories: StateCategories;
 
-  markTopX: boolean;
-  markTopXCount: number;
-  markAllTypes: boolean;
-  markIPlus1: boolean;
-  minSentenceLength: number;
-  markOnlyFrequent: boolean;
+  topXMark: boolean;
+  topXMarkAll: boolean;
+  topXMarkCount: number;
+  iPlus1Mark: boolean;
+  iPlus1MarkOnlyFrequent: boolean;
+  iPlus1EvalAgainstKnown: boolean;
+  iPlus1MinSentenceLen: number;
   skipFurigana: boolean;
   generatePitch: boolean;
+
+  enableStylePresets: boolean;
+  stylePresets: string[];
+  baseStylingMode: BaseStylingMode;
+
+  baseColor: PresetColor;
+
+  jpdbColorLocked: PresetColor;
+  jpdbColorSuspended: PresetColor;
+  jpdbColorBlacklisted: PresetColor;
+  jpdbColorNeverForget: PresetColor;
+  jpdbColorNotInDeck: PresetColor;
+  jpdbColorNew: PresetColor;
+  jpdbColorLearning: PresetColor;
+  jpdbColorKnown: PresetColor;
+  jpdbColorDue: PresetColor;
+  jpdbColorFailed: PresetColor;
+
+  categoryColorUnmined: PresetColor;
+  categoryColorNew: PresetColor;
+  categoryColorLearning: PresetColor;
+  categoryColorKnown: PresetColor;
+
+  frequentColor: PresetColor;
+  iPlusOneColor: PresetColor;
+  misparsedColor: PresetColor;
+
+  pitchColorHeiban: PresetColor;
+  pitchColorAtamadaka: PresetColor;
+  pitchColorNakadaka: PresetColor;
+  pitchColorOdaka: PresetColor;
+  pitchColorKifuku: PresetColor;
+
+  furiganaUnminedWords: FuriganaVisibility;
+  furiganaNewWords: FuriganaVisibility;
+  furiganaLearningWords: FuriganaVisibility;
+  furiganaKnownWords: FuriganaVisibility;
+  furiganaUnrelatedWords: FuriganaVisibility;
+
+  highlightMisparsed: boolean;
+  highlightPitchAccent: boolean;
 
   customWordCSS: string;
 
@@ -115,10 +173,10 @@ export type ConfigurationSchema = {
   jpdbRotateBackward: Keybinds;
 
   //#endregion
-  //#region Satori Reader
+  //#region Parsers
 
-  satoriReaderShowToggleOverlayButton: boolean;
-  satoriReaderToggleEventSource: Keybinds;
+  parserTouchEventsShowToggleOverlayButton: boolean;
+  parserTouchEventsToggleEventSource: Keybinds;
 
   //#endregion
   //#region Anki Integration (not implemented!)

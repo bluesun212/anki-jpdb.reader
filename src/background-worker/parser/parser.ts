@@ -1,5 +1,11 @@
 import { parse } from '@shared/jpdb/parse';
-import { JPDBCard, JPDBRawToken, JPDBRawVocabulary, JPDBToken } from '@shared/jpdb/types';
+import {
+  JPDBCard,
+  JPDBCardState,
+  JPDBRawToken,
+  JPDBRawVocabulary,
+  JPDBToken,
+} from '@shared/jpdb/types';
 import { Batch } from './parser.types';
 import { getPitchClass } from './pitch-accent-utils';
 import { getConfiguration } from '@shared/configuration/get-configuration';
@@ -55,7 +61,7 @@ export class Parser {
           glosses,
           partOfSpeech: meaningsPartOfSpeech[i],
         })),
-        cardState: cardState?.length ? cardState : ['not-in-deck'],
+        cardState: cardState?.length ? cardState : [JPDBCardState.NOT_IN_DECK],
         pitchAccent: pitchAccent ?? [],
         wordWithReading: null,
       };

@@ -1,5 +1,5 @@
 import { DEFAULT_CONFIGURATION } from '@shared/configuration/default-configuration';
-import { getConfiguration } from '@shared/configuration/get-configuration';
+import { getConfiguration, getFullConfiguration } from '@shared/configuration/get-configuration';
 import { setConfiguration } from '@shared/configuration/set-configuration';
 import { ConfigurationSchema } from '@shared/configuration/types';
 import { createElement } from '@shared/dom/create-element';
@@ -7,22 +7,29 @@ import { displayToast } from '@shared/dom/display-toast';
 import { findElement } from '@shared/dom/find-element';
 import { withElement } from '@shared/dom/with-element';
 import { withElements } from '@shared/dom/with-elements';
+import { getVersion } from '@shared/extension/get-version';
 import { ping } from '@shared/jpdb/ping';
 import { JPDBDeck } from '@shared/jpdb/types';
 import { FetchDecksCommand } from '@shared/messages/background/fetch-decks.command';
 import { ConfigurationUpdatedCommand } from '@shared/messages/broadcast/configuration-updated.command';
 import { onBroadcastMessage } from '@shared/messages/receiving/on-broadcast-message';
+import { computeWordCss } from '@shared/style-presets/compute-word-css';
+import { HTMLColorInputElement } from './elements/html-color-input-element';
 import { HTMLFeaturesInputElement } from './elements/html-features-input-element';
 import { HTMLKeybindInputElement } from './elements/html-keybind-input-element';
 import { HTMLMiningInputElement } from './elements/html-mining-input-element';
-import { HTMLNewStateInputElement } from './elements/html-new-state-input-element';
 import { HTMLParsersInputElement } from './elements/html-parsers-input-element';
+import { HTMLPresetsInputElement } from './elements/html-presets-input-element';
+import { HTMLStateCategoryInputElement } from './elements/html-state-category-input-element';
+import { showTextOverlay } from './elements/lib/text-overlay';
 
 customElements.define('mining-input', HTMLMiningInputElement);
 customElements.define('keybind-input', HTMLKeybindInputElement);
 customElements.define('parsers-input', HTMLParsersInputElement);
+customElements.define('preset-input', HTMLPresetsInputElement);
 customElements.define('features-input', HTMLFeaturesInputElement);
-customElements.define('new-state-input', HTMLNewStateInputElement);
+customElements.define('state-category-input', HTMLStateCategoryInputElement);
+customElements.define('color-input', HTMLColorInputElement);
 
 const localConfiguration = new Map<
   keyof ConfigurationSchema,
@@ -42,6 +49,8 @@ const jpdbDeckFields = new Map<HTMLSelectElement, string>();
 let suppressChangeNotifications = false;
 
 //#region Init Interactions
+
+findElement('#version').innerText = `v${getVersion()}`;
 
 withFields(async (field: HTMLInputElement) => {
   await loadField(field);
@@ -65,6 +74,14 @@ withElement('#apiTokenButton', (button) => {
   button.onclick = (): void => {
     withElement('#jpdbApiToken', (i: HTMLInputElement) => {
       void validateJPDBApiKey(i.value);
+    });
+  };
+});
+
+withElement('#show-computed-style', (button) => {
+  button.onclick = (): void => {
+    void getFullConfiguration().then((config) => {
+      showTextOverlay(document.body, 'Computed word CSS', computeWordCss(config));
     });
   };
 });
@@ -218,17 +235,25 @@ withElements('[data-show]', (element) => {
    *
    * - myProperty
    * - !myProperty
-   * - myProperty['includeString']
+   * - myProperty['includeString'] (array field: whether it includes the string)
+   * - myProperty['objectKey'] (object field: the value stored at that key, e.g. for comparison)
+   * - myProperty = 'someValue'
+   * - myProperty != 'someValue'
    * - myProperty && !myOtherProperty
    * - myProperty || myOtherProperty
    * - (myProperty && myOtherProperty) || !myThirdProperty
    */
 
   const fields =
-    attributeValue
-      ?.match(/(\w+(\['[^']+'\])?)/g)
-      ?.map((field) => field.replace(/\['[^']+'\]/g, '').trim())
-      .filter(Boolean) ?? [];
+    Array.from(
+      new Set(
+        attributeValue
+          ?.replace(/'[^']*'/g, '')
+          .match(/(\w+(\['[^']+'\])?)/g)
+          ?.map((field) => field.replace(/\['[^']+'\]/g, '').trim())
+          .filter(Boolean),
+      ),
+    ) ?? [];
 
   for (const f of fields) {
     if (!bindings.has(f)) {
@@ -259,12 +284,16 @@ function updateBindings(key: keyof ConfigurationSchema): void {
 
 function parseCondition(expr: string): boolean {
   // Tokenize
-  const tokens = expr
-    .replace(/([()!])/g, ' $1 ')
-    .replace(/&&/g, ' && ')
-    .replace(/\|\|/g, ' || ')
-    .split(/\s+/)
-    .filter(Boolean);
+  const tokens =
+    expr
+      .replace(/!=/g, ' != ')
+      .replace(/([()])/g, ' $1 ')
+      .replace(/!(?!=)/g, ' ! ')
+      .replace(/(?<!!)=/g, ' = ')
+      .replace(/&&/g, ' && ')
+      .replace(/\|\|/g, ' || ')
+      .match(/'[^']*'|\S+/g)
+      ?.filter(Boolean) ?? [];
 
   let pos = 0;
 
@@ -276,13 +305,22 @@ function parseCondition(expr: string): boolean {
     return tokens[pos++];
   }
 
-  function parsePrimary(): boolean {
+  function toBoolean(value: string | boolean): boolean {
+    if (typeof value === 'boolean') {
+      return value;
+    }
+
+    return value.length > 0;
+  }
+
+  function parseAtom(): string | boolean {
     const token = peek();
 
     if (token === '(') {
       next(); // consume '('
       const value = parseOr();
 
+      // consume ')'
       if (next() !== ')') {
         throw new Error('Expected )');
       }
@@ -291,43 +329,64 @@ function parseCondition(expr: string): boolean {
     }
 
     if (token === '!') {
-      next();
+      next(); // consume '!'
+      const value = parseAtom();
 
-      return !parsePrimary();
+      return !toBoolean(value);
     }
 
-    // Property name or Array access
+    // Load and validate configuration key
     next(); // consume and shift pointer
+
+    if (/^'[^']*'$/.test(token)) {
+      return token.slice(1, -1);
+    }
 
     const match = /^(\w+)(\['([^']+)'\])?$/.exec(token);
     // match will contain [ entire match, key, full prop access (if any), prop (if any) ] - key replaces token
     const [, key, , prop] = match!;
 
-    let value = localConfiguration.get(key as keyof ConfigurationSchema);
+    const fallback = DEFAULT_CONFIGURATION[key as keyof ConfigurationSchema]; // fallback used for unset values or unknown keys
+    let value = localConfiguration.get(key as keyof ConfigurationSchema) ?? fallback;
+
+    if (fallback === undefined) {
+      throw new Error(`Unknown configuration key: ${key}`);
+    }
 
     // If array access and value is array, value equals whether prop is in array
     if (prop && Array.isArray(value)) {
       value = (value as string[]).includes(prop);
+    } else if (prop && typeof value === 'object' && value !== null) {
+      // Plain object access (e.g. stateCategories['locked']) - value becomes the looked-up
+      // property (or '' if unset), so it can be compared with `= '...'`/`!= '...'`.
+      value = (value as Record<string, string>)[prop] ?? '';
     }
 
-    if (typeof value === 'boolean') {
-      return value;
+    return value as string | boolean;
+  }
+
+  function parseComparison(): boolean {
+    const left = parseAtom();
+    const operator = peek();
+
+    if (operator === '=' || operator === '!=') {
+      next();
+      const right = parseAtom();
+
+      return operator === '=' ? left === right : left !== right;
     }
 
-    if (typeof value === 'string') {
-      return value?.length > 0;
-    }
-
-    return !!value;
+    return toBoolean(left);
   }
 
   function parseAnd(): boolean {
-    let value = parsePrimary();
+    let value = parseComparison();
 
     while (peek() === '&&') {
       next();
+      const comperand = parseComparison(); // While left side may already be false, right side needs to be evaluated to be consumed correctly
 
-      value = value && parsePrimary();
+      value = value && comperand;
     }
 
     return value;
@@ -338,8 +397,9 @@ function parseCondition(expr: string): boolean {
 
     while (peek() === '||') {
       next();
+      const comperand = parseAnd(); // While left side may already be true, right side needs to be evaluated to be consumed correctly
 
-      value = value || parseAnd();
+      value = value || comperand;
     }
 
     return value;
@@ -357,7 +417,10 @@ function parseCondition(expr: string): boolean {
     }
 
     return result;
-  } catch {
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('Parser', 'Error during parsing', e);
+
     return false;
   }
 }
@@ -398,7 +461,7 @@ function withFields(cb: (field: HTMLInputElement) => Promise<void>, afterAll?: (
   const promises = [] as Promise<void>[];
 
   withElements(
-    'input, textarea, select, keybind-input, parsers-input, features-input, new-state-input',
+    'input, textarea, select, keybind-input, parsers-input, preset-input, features-input, state-category-input, color-input',
     (field: HTMLInputElement) => {
       const internal = field.hasAttribute('internal');
       const ignored = ['hidden', 'submit', 'button'];

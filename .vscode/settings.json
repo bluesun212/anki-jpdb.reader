@@ -8,6 +8,9 @@
   "editor.formatOnSaveMode": "file",
   "editor.insertSpaces": true,
   "editor.tabSize": 2,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "always"
+  },
   "[html]": {
     "files.insertFinalNewline": false
   },
@@ -15,8 +18,7 @@
     "editor.formatOnPaste": false,
     "editor.formatOnSave": false
   },
-  "typescript.updateImportsOnFileMove.enabled": "always",
-  "javascript.updateImportsOnFileMove.enabled": "always",
-  "javascript.preferences.importModuleSpecifier": "relative",
-  "typescript.preferences.importModuleSpecifier": "relative"
+  "js/ts.updateImportsOnFileMove.enabled": "always",
+  "js/ts.preferences.importModuleSpecifier": "relative",
+  "js/ts.tsdk.path": "node_modules\\typescript\\lib"
 }

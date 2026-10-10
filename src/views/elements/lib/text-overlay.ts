@@ -1,0 +1,72 @@
+import { createElement } from '@shared/dom/create-element';
+import { displayToast } from '@shared/dom/display-toast';
+import { findElement } from '@shared/dom/find-element';
+
+export const showTextOverlay = (host: HTMLElement, title: string, content: string): void => {
+  const backdrop = createElement('div', {
+    class: ['backdrop', 'is-open'],
+    attributes: {
+      role: 'dialog',
+      'aria-modal': 'true',
+      'data-text-overlay': '',
+    },
+    handler: (): void => {
+      hideTextOverlay(host);
+    },
+  });
+
+  host.appendChild(backdrop);
+
+  const overlay = createElement('div', {
+    class: ['overlay', 'is-open'],
+    attributes: {
+      'data-text-overlay': '',
+    },
+    children: [
+      {
+        tag: 'div',
+        class: 'overlay-header',
+        children: [
+          {
+            tag: 'h3',
+            innerText: title,
+          },
+          {
+            tag: 'span',
+            class: 'overlay-copy',
+            innerText: '⎘',
+            attributes: {
+              title: 'Copy to clipboard',
+            },
+            handler: (ev): void => {
+              ev?.stopPropagation();
+
+              void navigator.clipboard.writeText(content).then(() => {
+                displayToast('success', 'Copied to clipboard', undefined, true);
+              });
+            },
+          },
+        ],
+      },
+      {
+        tag: 'div',
+        class: 'overlay-body',
+        children: [
+          {
+            tag: 'pre',
+            innerText: content,
+          },
+        ],
+      },
+    ],
+  });
+
+  host.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
+};
+
+export const hideTextOverlay = (host: HTMLElement): void => {
+  findElement(host, '.backdrop[data-text-overlay]')?.remove();
+  findElement(host, '.overlay[data-text-overlay]')?.remove();
+  document.body.style.overflow = '';
+};

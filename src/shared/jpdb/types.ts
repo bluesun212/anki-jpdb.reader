@@ -93,3 +93,11 @@ export type LabeledCardState = {
   name: string;
   description: string;
 };
+
+export enum WordStateCategory {
+  UNMINED = 'unmined',
+  NEW = 'new',
+  LEARNING = 'learning',
+  KNOWN = 'known',
+}
+export type StateCategories = Partial<Record<JPDBCardState, WordStateCategory>>;

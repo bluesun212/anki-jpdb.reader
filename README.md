@@ -48,10 +48,11 @@ Some web apps and sites require special attention to work properly; therefore, t
 | Satori Reader | [satorireader.com](https://www.satorireader.com/) |
 | NHK News | [nhk.or.jp](https://www3.nhk.or.jp/news/) |
 | Wikipedia | [ja.wikipedia.org](https://ja.wikipedia.org/) |
-| Bunpro | [bunpro.jp](https://bunpro.jp) (Experimental) |
+| Bunpro | [bunpro.jp](https://bunpro.jp) — graded reader and quiz/review sessions (Experimental) |
+| JPDB Reviews | [jpdb.io/review](https://jpdb.io/review) — auto-parses the example sentence shown during a review |
 | asbplayer | [github.com/killergerbah/asbplayer](https://github.com/killergerbah/asbplayer) |
 | YouTube comments | [youtube.com](https://youtube.com/) |
-| Custom Dictionaries | [CDM by Nakura Nakamoto](https://gitlab.com/nakura/jpdb_cdm) |
+| Custom Dictionaries | [CDM by Nakura Nakamoto](https://gitlab.com/nakura/jpdb_cdm) — integrates with this separate third-party extension's UI on jpdb.io pages |
 | LunaTranslator | [Luna Translator](https://docs.lunatranslator.org/en/) with WebView2 enabled |
 
 ## Installation
@@ -73,14 +74,14 @@ Some web apps and sites require special attention to work properly; therefore, t
 
 [Firefox Browser Extension](https://addons.mozilla.org/firefox/addon/anki-jpdb-reader/), or install it via Firefox for Android **or**
 
-1. Download the latest `-firefox.xpi` file from the releases page.
-2. Open your browser and navigate to `about:debugging`.
-3. Click on `This Firefox`, then `Load Temporary Add-on`.
-4. In the file picker dialog, navigate to the folder where you downloaded the xpi file.
-5. Click select/open/choose to exit the dialog and load the extension.
+1. Download the signed [anki_jpdb_reader-0.8.1.xpi](https://addons.mozilla.org/firefox/downloads/file/4554049/anki_jpdb_reader-0.8.1.xpi) directly. This link may take a few minutes to a few hours to update after a new release while Mozilla reviews it — it always resolves to the latest reviewed version in the meantime.
+2. Open your browser and navigate to `about:addons`.
+3. Click the gear icon and choose `Install Add-on From File...`.
+4. In the file picker dialog, select the downloaded `.xpi` file.
+5. Click `Add` when prompted to confirm the installation.
 6. Continue with the [Setup](#setup) section.
 
-Please note that if you use the manual setup, the extension will be unloaded the next time you open Firefox. Your settings will be preserved. This is only for testing and debugging!
+To test an unreviewed pre-release build instead, download the `*-firefox.xpi` file from the releases page and load it temporarily via `about:debugging` → `This Firefox` → `Load Temporary Add-on` — this build is unsigned, so it's unloaded again the next time Firefox restarts.
 
 ### Edge Canary
 
@@ -109,11 +110,11 @@ Additionally, you can add complete meta definitions in JSON format - refer to [t
 
 ## Customize text colors and furigana
 
-Customization is currently done with custom CSS, as it is the simplest way to offer a flexible framework. [See the docs on it here](docs/custom-css.md).
+Customization can be done through a combination of Style Presets and custom CSS — [see the docs on it here](docs/custom-css.md).
 
 ## Building
 
-Node version 22.x is used!
+Node version 24.x is used!
 
 You can run the following commands to build the extension locally:
 

@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
 
 jobs:
   release:
@@ -11,26 +12,46 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22.x]
+        node-version: [24.x]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
-      - run: npm i
-      - run: npm run lint
-      - run: npm run pack --if-present
+      - name: Install dependencies
+        run: npm i
 
-      - uses: 'marvinpinto/action-automatic-releases@latest'
+      - name: Lint
+        run: npm run lint
+
+      - name: Build all targets
+        run: node scripts/build.mjs --pack --ff-submission
+
+      - name: Publish Firefox to AMO (listed)
+        run: npm run publish:ff
+        env:
+          JWT_ISSUER: ${{ secrets.JWT_ISSUER }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+      - name: Publish Chrome to Chrome Web Store
+        uses: mnao305/chrome-extension-upload@v6.0.0
         with:
-          repo_token: '${{ secrets.GITHUB_TOKEN }}'
-          prerelease: false
+          file-path: 'packages/anki-jpdb.reader-chromium.zip'
+          extension-id: ${{ secrets.CHROME_EXTENSION_ID }}
+          client-id: ${{ secrets.CHROME_CLIENT_ID }}
+          client-secret: ${{ secrets.CHROME_CLIENT_SECRET }}
+          refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          publish: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: packages/CURRENT_VERSION.md
           files: |
             packages/anki-jpdb.reader-chromium.zip
             packages/anki-jpdb.reader-firefox.xpi
             packages/LICENSE.md
-        id: 'automatic_releases'

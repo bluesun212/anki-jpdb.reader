@@ -13,8 +13,8 @@ Environment:
 
 \`\`\`
 os Windows 11
-node 22.13.1
-npm 10.9.2
+node 24.20.0
+npm 11.19.0
 \`\`\`
 
 \`\`\`
@@ -187,6 +187,15 @@ function createReleaseNotes() {
   const releaseNotesText = releaseNotes.join('\n');
 
   writeFileSync(`${dist}/CURRENT_VERSION.md`, releaseNotesText);
+
+  const amoMetadata = {
+    version: {
+      release_notes: { 'en-US': releaseNotesText },
+      approval_notes: NOTE_FOR_REVIEWERS,
+    },
+  };
+
+  writeFileSync(`${dist}/amo-metadata.json`, JSON.stringify(amoMetadata, null, 2));
 
   console.log('Release notes for current version created');
 }
